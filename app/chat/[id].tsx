@@ -81,7 +81,7 @@ export default function ChatThreadScreen() {
         </TouchableOpacity>
         <Text style={styles.title} numberOfLines={1}>{title}</Text>
         <TouchableOpacity
-          style={styles.iconBtn}
+          style={styles.callBtn}
           onPress={() => {
             if (!peerId || !id) return;
             startCall({
@@ -92,7 +92,7 @@ export default function ChatThreadScreen() {
             });
           }}
         >
-          <Ionicons name="call-outline" size={20} color={colors.primary} />
+          <Ionicons name="call-outline" size={20} color={colors.brandInk} />
         </TouchableOpacity>
       </View>
       <Text style={styles.e2e}>End-to-end encrypted · keys stay on this device</Text>
@@ -103,7 +103,7 @@ export default function ChatThreadScreen() {
             const mine = row.senderId === user?.uid;
             return (
               <View key={row.id} style={[styles.bubble, mine ? styles.mine : styles.theirs]}>
-                <Text style={[styles.body, mine && { color: "#fff" }]}>{row.body}</Text>
+                <Text style={[styles.body, mine && { color: colors.onBrand }]}>{row.body}</Text>
               </View>
             );
           })}
@@ -119,7 +119,7 @@ export default function ChatThreadScreen() {
             returnKeyType="send"
           />
           <TouchableOpacity style={styles.send} onPress={onSend} disabled={!convKey}>
-            <Ionicons name="send" size={18} color="#fff" />
+            <Ionicons name="send" size={18} color={colors.onBrand} />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -146,9 +146,17 @@ const styles = StyleSheet.create({
   title: {
     flex: 1,
     textAlign: "center",
-    fontFamily: fonts.bold,
-    fontSize: 17,
+    fontFamily: fonts.displaySemi,
+    fontSize: 18,
     color: colors.text,
+  },
+  callBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 16,
+    backgroundColor: colors.wash,
+    alignItems: "center",
+    justifyContent: "center",
   },
   e2e: {
     textAlign: "center",
@@ -170,11 +178,13 @@ const styles = StyleSheet.create({
   },
   mine: {
     alignSelf: "flex-end",
-    backgroundColor: colors.primary,
+    backgroundColor: colors.brand,
   },
   theirs: {
     alignSelf: "flex-start",
-    backgroundColor: "#F1F5F9",
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.washStrong,
   },
   body: {
     fontFamily: fonts.regular,

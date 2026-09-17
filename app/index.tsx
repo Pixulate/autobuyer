@@ -1,6 +1,6 @@
-import { Image } from "expo-image";
-import { Redirect } from "expo-router";
+import { BrandLogo } from "@/components/ScreenHeader";
 import { useAuth } from "@/lib/auth";
+import { Redirect } from "expo-router";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -10,7 +10,7 @@ function Splash() {
       style={{
         width: "100%",
         height: "100%",
-        backgroundColor: "#00E567",
+        backgroundColor: "#06102A",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
@@ -25,12 +25,7 @@ function Splash() {
           width: "100%",
         }}
       >
-        <Image
-          source={require("@/assets/icons/company/tire.svg")}
-          placeholder={"tire"}
-          style={{ width: 58, height: 67 }}
-          contentFit="contain"
-        />
+        <BrandLogo height={40} />
       </View>
     </SafeAreaView>
   );

@@ -25,10 +25,10 @@ export function isPermissionError(error: unknown) {
 export function reportError(context: string, error: unknown, opts?: { alert?: boolean }) {
   const message = errorMessage(error);
   const permission = isPermissionError(error);
-  console.error(`[AutoQuest] ${context}`, error);
+      console.error(`[Carloop] ${context}`, error);
   if (permission) {
     console.error(
-      `[AutoQuest] Firestore denied "${context}". Deploy firestore.rules (buyers, conversations, calls, users).`
+      `[Carloop] Firestore denied "${context}". Deploy firestore.rules (buyers, conversations, calls, users).`
     );
   }
 

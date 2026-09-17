@@ -37,6 +37,12 @@ export type BuyerProfile = {
   status: string;
   location: string;
   bio: string;
+  timeline: string;
+  condition: string;
+  payment: string;
+  currentVehicle: string;
+  preapproved: string;
+  photoUrl: string;
   preferences: BuyerPreference[];
   interests: VehicleInterest[];
 };
@@ -46,6 +52,12 @@ export const emptyProfile = (name = ""): BuyerProfile => ({
   status: "",
   location: "",
   bio: "",
+  timeline: "",
+  condition: "",
+  payment: "",
+  currentVehicle: "",
+  preapproved: "",
+  photoUrl: "",
   preferences: [],
   interests: [],
 });
@@ -73,6 +85,19 @@ export const STATUS_OPTIONS = [
   "Just browsing",
 ];
 
+export const TIMELINE_OPTIONS = [
+  "This week",
+  "This month",
+  "1–3 months",
+  "Just researching",
+];
+
+export const CONDITION_OPTIONS = ["New", "Used", "Certified", "Either"];
+
+export const PAYMENT_OPTIONS = ["Finance", "Lease", "Cash", "Not sure"];
+
+export const PREAPPROVED_OPTIONS = ["Pre-approved", "Will apply", "Paying cash"];
+
 export const INTEREST_TAG_SUGGESTIONS = [
   "Dealer Maintained",
   "Certified Pre-Owned",
@@ -89,11 +114,11 @@ export const PREFERENCE_KINDS: {
   icon: IconName;
   color: string;
 }[] = [
-  { kind: "body", title: "Body style", hint: "SUV, truck, sedan…", icon: "car-sport-outline", color: "#3B82F6" },
-  { kind: "budget", title: "Price range", hint: "Min and max you're comfortable with", icon: "cash-outline", color: "#22C55E" },
-  { kind: "mileage", title: "Mileage", hint: "How many miles is too many", icon: "speedometer-outline", color: "#A855F7" },
-  { kind: "location", title: "Location", hint: "City or area you'll buy in", icon: "location-outline", color: "#EF4444" },
-  { kind: "custom", title: "Something else", hint: "AWD, fuel type, seats…", icon: "add-circle-outline", color: "#F59E0B" },
+  { kind: "body", title: "Body style", hint: "SUV, truck, sedan…", icon: "car-sport-outline", color: "#0060F8" },
+  { kind: "budget", title: "Price range", hint: "Min and max you're comfortable with", icon: "cash-outline", color: "#F87000" },
+  { kind: "mileage", title: "Mileage", hint: "How many miles is too many", icon: "speedometer-outline", color: "#0047C2" },
+  { kind: "location", title: "Location", hint: "City or area you'll buy in", icon: "location-outline", color: "#0A1B4A" },
+  { kind: "custom", title: "Something else", hint: "AWD, fuel type, seats…", icon: "add-circle-outline", color: "#3B82F6" },
 ];
 
 export function preferenceMeta(kind: PreferenceKind) {
@@ -159,8 +184,8 @@ export function interestMeta(interest: VehicleInterest) {
 }
 
 export const INTEREST_COLORS = [
-  ["#3B82F6", "#1E40AF"],
-  ["#14B8A6", "#0F766E"],
-  ["#F59E0B", "#C2410C"],
-  ["#A855F7", "#6D28D9"],
+  ["#0060F8", "#0047C2"],
+  ["#F87000", "#C2410C"],
+  ["#0A1B4A", "#06102A"],
+  ["#3B82F6", "#1D4ED8"],
 ] as const;

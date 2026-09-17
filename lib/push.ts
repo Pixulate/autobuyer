@@ -26,7 +26,15 @@ async function registerVoipToken(uid: string) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const VoipPushNotification = require("react-native-voip-push-notification").default;
     VoipPushNotification.addEventListener("register", async (token: string) => {
-      await setDoc(doc(db, "users", uid), { voipPushToken: token, updatedAt: new Date().toISOString() }, { merge: true });
+      await setDoc(
+        doc(db, "users", uid),
+        {
+          voipPushToken: String(token).replace(/[<>\s]/g, "").toLowerCase(),
+          voipApnsSandbox: typeof __DEV__ !== "undefined" ? __DEV__ : true,
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
     });
     VoipPushNotification.addEventListener("notification", (notification: { uuid?: string; data?: { uuid?: string } }) => {
       const uuid = notification?.uuid || notification?.data?.uuid;
@@ -46,7 +54,7 @@ export async function registerPushToken(uid: string) {
   }
   try {
     if (!Device.isDevice) {
-      console.warn("[AutoQuest] Push tokens need a physical device for native calling.");
+      console.warn("[Carloop] Push tokens need a physical device for native calling.");
       return null;
     }
     const existing = await Notifications.getPermissionsAsync();
@@ -56,7 +64,7 @@ export async function registerPushToken(uid: string) {
       status = asked.status;
     }
     if (status !== "granted") {
-      console.warn("[AutoQuest] Notification permission not granted — incoming calls won't wake the device.");
+      console.warn("[Carloop] Notification permission not granted — incoming calls won't wake the device.");
       return null;
     }
 
@@ -137,7 +145,7 @@ async function sendExpoCallPush(opts: {
   });
   if (!res.ok) {
     const body = await res.text();
-    console.error("[AutoQuest] Expo push failed", res.status, body);
+    console.error("[Carloop] Expo push failed", res.status, body);
   }
 }
 
@@ -152,7 +160,7 @@ export async function sendIncomingCallPush(opts: {
   nativeUuid?: string;
 }) {
   if (!opts.token && !opts.voipToken && !opts.devicePushToken && !opts.calleeId) {
-    console.warn("[AutoQuest] Callee has no push token; call will only ring if their app is open.");
+    console.warn("[Carloop] Callee has no push token; call will only ring if their app is open.");
     return;
   }
   try {

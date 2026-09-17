@@ -1,9 +1,9 @@
-import { StyleSheet, Text, View } from "react-native";
+import { BrandLogo } from "@/components/ScreenHeader";
+import { colors } from "@/constants/theme";
+import { useState } from "react";
+import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Page_1, Page_2, Page_3, Page_4 } from "./pages/info";
-import { useState } from "react";
-import { Image } from "expo-image";
-import { globalStyles } from "../_layout";
 
 export default function Onboarding() {
   
@@ -21,7 +21,7 @@ export default function Onboarding() {
       style={{
         width: "100%",
         height: "100%",
-        backgroundColor: "white",
+        backgroundColor: colors.background,
         
         display: "flex",
         justifyContent: "center",
@@ -32,18 +32,7 @@ export default function Onboarding() {
         
         {/*Logo*/}
         <View style={{ width: "100%", marginBottom: 30, display:"flex", flexDirection:"row", justifyContent:"center", alignItems:"center"}}>
-          <Image
-            tintColor={"#00E567"}
-            source={require("@/assets/icons/company/tire.svg")}
-            placeholder={"tire"}
-            style={{ width: 25, height: 25}}
-            contentFit="contain"
-          />
-          
-          <Text style={[globalStyles.funnelSemiBold, {textAlign:"center", fontSize: 24, color:"#00E567"}]}>
-            autoquest
-          </Text>
-          
+          <BrandLogo height={28} />
         </View>
         
         {
@@ -97,15 +86,15 @@ export const onboardingStyles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     
-    backgroundColor: "#00E567",
-    borderRadius: 12
+    backgroundColor: colors.brand,
+    borderRadius: 16
   },
   
   previewWindow: {
     width: "100%",
     
     borderRadius: 25,
-    backgroundColor: "#CFE4FF",
+    backgroundColor: colors.wash,
     display: "flex",
     justifyContent: "center",
     alignItems: "center",

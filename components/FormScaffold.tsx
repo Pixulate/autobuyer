@@ -23,7 +23,7 @@ export function FormScaffold({ title, onClose, children, footer }: FormScaffoldP
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.screen, { paddingTop: insets.top + 6 }]}>
+    <View style={[styles.screen, { paddingTop: Platform.OS === "ios" ? 18 : insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.iconBtn} onPress={onClose} activeOpacity={0.7}>
           <Ionicons name="close" size={24} color={colors.text} />
@@ -50,7 +50,7 @@ export const formStyles = StyleSheet.create({
     fontSize: 13,
     color: colors.textSecondary,
     marginBottom: 8,
-    marginTop: 18,
+    marginTop: 12,
   },
   input: {
     width: "100%",
@@ -93,11 +93,11 @@ export const formStyles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1,
     borderColor: colors.chipBorder,
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
   },
   chipOn: {
-    backgroundColor: "#E8F1FF",
-    borderColor: colors.primary,
+    backgroundColor: colors.wash,
+    borderColor: colors.brandDark,
   },
   chipText: {
     fontFamily: fonts.semibold,
@@ -105,19 +105,19 @@ export const formStyles = StyleSheet.create({
     color: colors.text,
   },
   chipTextOn: {
-    color: colors.primary,
+    color: colors.brandInk,
   },
   primaryBtn: {
     height: 54,
-    borderRadius: 14,
-    backgroundColor: colors.primary,
+    borderRadius: 16,
+    backgroundColor: colors.brand,
     alignItems: "center",
     justifyContent: "center",
   },
   primaryLabel: {
     fontFamily: fonts.semibold,
     fontSize: 16,
-    color: "#FFFFFF",
+    color: colors.onBrand,
   },
   dangerBtn: {
     marginTop: 12,
@@ -159,8 +159,8 @@ const styles = StyleSheet.create({
   title: {
     flex: 1,
     textAlign: "center",
-    fontFamily: fonts.bold,
-    fontSize: 17,
+    fontFamily: fonts.displaySemi,
+    fontSize: 18,
     color: colors.text,
   },
   body: {

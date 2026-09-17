@@ -1,4 +1,5 @@
 import { TAB_BAR_HEIGHT } from "@/components/AppTabBar";
+import { IconButton, ScreenHeader, TabHeaderFrame } from "@/components/ScreenHeader";
 import { colors, fonts } from "@/constants/theme";
 import { useAuth } from "@/lib/auth";
 import { useChat } from "@/lib/chat";
@@ -14,33 +15,33 @@ export default function MessagesScreen() {
 
   return (
     <View style={styles.screen}>
-      <View style={{ paddingTop: insets.top + 16, paddingHorizontal: 20 }}>
-        <View style={styles.top}>
-          <Text style={styles.title}>Messages</Text>
-          <TouchableOpacity style={styles.newBtn} onPress={() => router.push("/chat-new")}>
-            <Ionicons name="create-outline" size={20} color={colors.primary} />
-          </TouchableOpacity>
-        </View>
-        <Text style={styles.lede}>
-          Chats are end-to-end encrypted on this device. Dealers never see your phone number or email in the thread.
-        </Text>
-      </View>
+      <TabHeaderFrame>
+        <ScreenHeader
+          title="Inbox"
+          lede="End-to-end encrypted on this device. Dealers never see your phone or email in the thread."
+          right={
+            <IconButton onPress={() => router.push("/chat-new")}>
+              <Ionicons name="create-outline" size={20} color={colors.brandInk} />
+            </IconButton>
+          }
+        />
+      </TabHeaderFrame>
 
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: 20,
-          paddingTop: 12,
+          paddingTop: 8,
           paddingBottom: TAB_BAR_HEIGHT + insets.bottom,
         }}
       >
         {!conversations.length ? (
           <View style={styles.empty}>
             <View style={styles.iconWrap}>
-              <Ionicons name="lock-closed-outline" size={28} color={colors.primary} />
+              <Ionicons name="lock-closed-outline" size={28} color={colors.brandInk} />
             </View>
             <Text style={styles.emptyTitle}>{loading ? "Loading chats…" : "No conversations yet"}</Text>
             <Text style={styles.emptyCopy}>
-              When a dealer unlocks an interest, the thread appears here. You can also start a secure chat if you already have their AutoQuest email.
+              When a dealer unlocks an interest, the thread appears here. You can also start a secure chat if you already have their Carloop email.
             </Text>
           </View>
         ) : (
@@ -52,7 +53,7 @@ export default function MessagesScreen() {
                 onPress={() => router.push({ pathname: "/chat/[id]", params: { id: conv.id } })}
               >
                 <View style={styles.avatar}>
-                  <Ionicons name="storefront-outline" size={18} color={colors.primary} />
+                  <Ionicons name="storefront-outline" size={18} color={colors.brandInk} />
                 </View>
                 <View style={styles.copy}>
                   <Text style={styles.name}>{user ? otherName(conv, user.uid) : "Chat"}</Text>
@@ -60,7 +61,7 @@ export default function MessagesScreen() {
                     {conv.lastPreview || "Encrypted message"}
                   </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+                <Ionicons name="chevron-forward" size={16} color={colors.washStrong} />
               </TouchableOpacity>
             ))}
           </View>
@@ -75,48 +76,28 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  top: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  title: {
-    fontFamily: fonts.bold,
-    fontSize: 28,
-    color: colors.text,
-  },
-  newBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
-    backgroundColor: "#E8F1FF",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  lede: {
-    marginTop: 8,
-    fontFamily: fonts.regular,
-    fontSize: 14,
-    lineHeight: 20,
-    color: colors.textSecondary,
-  },
   empty: {
-    marginTop: 48,
+    marginTop: 36,
     alignItems: "center",
     paddingHorizontal: 12,
+    backgroundColor: colors.surface,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: colors.washStrong,
+    paddingVertical: 36,
   },
   iconWrap: {
     width: 64,
     height: 64,
-    borderRadius: 20,
-    backgroundColor: "#E8F1FF",
+    borderRadius: 22,
+    backgroundColor: colors.wash,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 14,
   },
   emptyTitle: {
-    fontFamily: fonts.bold,
-    fontSize: 18,
+    fontFamily: fonts.displaySemi,
+    fontSize: 20,
     color: colors.text,
   },
   emptyCopy: {
@@ -128,11 +109,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   list: {
-    borderRadius: 18,
-    backgroundColor: colors.background,
+    borderRadius: 22,
+    backgroundColor: colors.surface,
     paddingHorizontal: 14,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "#F1F5F9",
+    borderWidth: 1,
+    borderColor: colors.washStrong,
   },
   row: {
     flexDirection: "row",
@@ -142,13 +123,13 @@ const styles = StyleSheet.create({
   },
   divider: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#F1F5F9",
+    borderBottomColor: colors.wash,
   },
   avatar: {
     width: 44,
     height: 44,
-    borderRadius: 14,
-    backgroundColor: "#E8F1FF",
+    borderRadius: 16,
+    backgroundColor: colors.wash,
     alignItems: "center",
     justifyContent: "center",
   },

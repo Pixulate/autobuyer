@@ -1,3 +1,4 @@
+import { saveProfilePhoto } from "@/lib/avatar";
 import { displayNameFor, useAuth } from "@/lib/auth";
 import {
   emptyProfile,
@@ -16,6 +17,8 @@ type BuyerContextValue = {
   loading: boolean;
   error: string;
   saveProfile: (next: Partial<BuyerProfile>) => Promise<void>;
+  setPhoto: (uri: string) => Promise<void>;
+  removePhoto: () => Promise<void>;
   upsertPreference: (pref: BuyerPreference) => Promise<void>;
   removePreference: (id: string) => Promise<void>;
   upsertInterest: (interest: VehicleInterest) => Promise<void>;
@@ -24,16 +27,27 @@ type BuyerContextValue = {
 
 const BuyerContext = createContext<BuyerContextValue | null>(null);
 
+function str(data: Record<string, unknown>, key: string) {
+  const value = data[key];
+  return typeof value === "string" ? value : "";
+}
+
 function parseProfile(data: Record<string, unknown> | undefined, fallbackName: string): BuyerProfile {
   const base = emptyProfile(fallbackName);
   if (!data) {
     return base;
   }
   return {
-    name: typeof data.name === "string" && data.name.trim() ? data.name : fallbackName,
-    status: typeof data.status === "string" ? data.status : "",
-    location: typeof data.location === "string" ? data.location : "",
-    bio: typeof data.bio === "string" ? data.bio : "",
+    name: str(data, "name").trim() ? str(data, "name") : fallbackName,
+    status: str(data, "status"),
+    location: str(data, "location"),
+    bio: str(data, "bio"),
+    timeline: str(data, "timeline"),
+    condition: str(data, "condition"),
+    payment: str(data, "payment"),
+    currentVehicle: str(data, "currentVehicle"),
+    preapproved: str(data, "preapproved"),
+    photoUrl: str(data, "photoUrl") || str(data, "photoURL"),
     preferences: Array.isArray(data.preferences) ? (data.preferences as BuyerPreference[]) : [],
     interests: Array.isArray(data.interests)
       ? (data.interests as VehicleInterest[]).map((item) => ({
@@ -113,6 +127,21 @@ export function BuyerProvider({ children }: { children: ReactNode }) {
     [persist, profile]
   );
 
+  const setPhoto = useCallback(
+    async (uri: string) => {
+      if (!user) {
+        throw new Error("Not signed in");
+      }
+      const photoUrl = await saveProfilePhoto(user, uri);
+      await saveProfile({ photoUrl });
+    },
+    [saveProfile, user]
+  );
+
+  const removePhoto = useCallback(async () => {
+    await saveProfile({ photoUrl: "" });
+  }, [saveProfile]);
+
   const upsertPreference = useCallback(
     async (pref: BuyerPreference) => {
       const existing = profile.preferences.some((item) => item.id === pref.id);
@@ -163,12 +192,14 @@ export function BuyerProvider({ children }: { children: ReactNode }) {
       loading,
       error,
       saveProfile,
+      setPhoto,
+      removePhoto,
       upsertPreference,
       removePreference,
       upsertInterest,
       removeInterest,
     }),
-    [profile, loading, error, saveProfile, upsertPreference, removePreference, upsertInterest, removeInterest]
+    [profile, loading, error, saveProfile, setPhoto, removePhoto, upsertPreference, removePreference, upsertInterest, removeInterest]
   );
 
   return <BuyerContext.Provider value={value}>{children}</BuyerContext.Provider>;

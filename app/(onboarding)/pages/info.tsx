@@ -2,6 +2,7 @@
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { onboardingStyles } from '../onboarding';
 import { AnimatedEntryCard, InnerCircleAnimation, SpinningTextCircle } from '../animations';
+import { colors } from "@/constants/theme";
 import { globalStyles } from '@/app/_layout';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
@@ -29,12 +30,12 @@ export function Page_1({setCurrentPage})
         </TouchableOpacity>
         
         <Text style={[globalStyles.h4, {fontSize: 15, textAlign:"center", marginTop: 15}]}>
-          By proceeding to use AutoQuest, you agree to our
-          <Text style={{color:"blue"}}>
+          By proceeding to use Carloop, you agree to our
+          <Text style={{color: colors.accent}}>
             {" terms of service "}
           </Text>
           and
-          <Text style={{color:"blue"}}>
+          <Text style={{color: colors.accent}}>
              {" privacy policy "}
           </Text>
         </Text>
@@ -74,12 +75,12 @@ export function Page_2({setCurrentPage})
         </TouchableOpacity>
         
         <Text style={[globalStyles.h4, {fontSize: 15, textAlign:"center", marginTop: 15}]}>
-          By proceeding to use AutoQuest, you agree to our
-          <Text style={{color:"blue"}}>
+          By proceeding to use Carloop, you agree to our
+          <Text style={{color: colors.accent}}>
             {" terms of service "}
           </Text>
           and
-          <Text style={{color:"blue"}}>
+          <Text style={{color: colors.accent}}>
              {" privacy policy "}
           </Text>
         </Text>
@@ -120,12 +121,12 @@ export function Page_3({setCurrentPage})
         </TouchableOpacity>
         
         <Text style={[globalStyles.h4, {fontSize: 15, textAlign:"center", marginTop: 15}]}>
-          By proceeding to use AutoQuest, you agree to our
-          <Text style={{color:"blue"}}>
+          By proceeding to use Carloop, you agree to our
+          <Text style={{color: colors.accent}}>
             {" terms of service "}
           </Text>
           and
-          <Text style={{color:"blue"}}>
+          <Text style={{color: colors.accent}}>
              {" privacy policy "}
           </Text>
         </Text>
@@ -168,12 +169,12 @@ export function Page_4({setCurrentPage})
         </TouchableOpacity>
         
         <Text style={[globalStyles.h4, {fontSize: 15, textAlign:"center", marginTop: 15}]}>
-          By proceeding to use AutoQuest, you agree to our
-          <Text style={{color:"blue"}}>
+          By proceeding to use Carloop, you agree to our
+          <Text style={{color: colors.accent}}>
             {" terms of service "}
           </Text>
           and
-          <Text style={{color:"blue"}}>
+          <Text style={{color: colors.accent}}>
              {" privacy policy "}
           </Text>
         </Text>

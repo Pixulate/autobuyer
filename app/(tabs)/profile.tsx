@@ -1,23 +1,20 @@
 import { TAB_BAR_HEIGHT } from "@/components/AppTabBar";
+import { BrandLogo, BRAND_LOGO_HEIGHT, TAB_HEADER_PAD_TOP, TAB_HEADER_PAD_X } from "@/components/ScreenHeader";
 import { colors, fonts } from "@/constants/theme";
 import {
   formatPreference,
-  INTEREST_COLORS,
   interestMeta,
   interestTitle,
-  preferenceMeta,
 } from "@/lib/buyer";
-import { useBuyer } from "@/lib/buyerProfile";
+import { promptProfilePhoto } from "@/lib/avatar";
 import { useAuth } from "@/lib/auth";
+import { useBuyer } from "@/lib/buyerProfile";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
+import { Image } from "expo-image";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
-  Dimensions,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
   ScrollView,
   StyleSheet,
   Text,
@@ -26,157 +23,184 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const CARD_WIDTH = SCREEN_WIDTH * 0.72;
-const CARD_GAP = 12;
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean).slice(0, 2);
+  const letters = parts.map((part) => part[0]?.toUpperCase() ?? "").join("");
+  return letters || "B";
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.detailRow}>
+      <Text style={styles.detailLabel}>{label}</Text>
+      <Text style={styles.detailValue}>{value}</Text>
+    </View>
+  );
+}
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { logout } = useAuth();
-  const { profile, loading, error } = useBuyer();
-  const [interestIndex, setInterestIndex] = useState(0);
+  const { profile, loading, error, setPhoto, removePhoto } = useBuyer();
+  const [photoBusy, setPhotoBusy] = useState(false);
 
-  const onInterestScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const x = event.nativeEvent.contentOffset.x;
-    const next = Math.round(x / (CARD_WIDTH + CARD_GAP));
-    setInterestIndex(Math.min(Math.max(next, 0), Math.max(profile.interests.length - 1, 0)));
-  };
-
-  const metaLine = [profile.status, profile.location].filter(Boolean).join(" • ");
+  const details = [
+    profile.timeline ? { label: "Timeline", value: profile.timeline } : null,
+    profile.condition ? { label: "Condition", value: profile.condition } : null,
+    profile.payment ? { label: "Payment", value: profile.payment } : null,
+    profile.preapproved ? { label: "Financing", value: profile.preapproved } : null,
+    profile.currentVehicle ? { label: "Trade-in", value: profile.currentVehicle } : null,
+  ].filter(Boolean) as { label: string; value: string }[];
 
   return (
     <View style={styles.screen}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.content,
-          { paddingTop: insets.top + 16, paddingBottom: TAB_BAR_HEIGHT + insets.bottom },
-        ]}
+        contentContainerStyle={{ paddingBottom: TAB_BAR_HEIGHT + insets.bottom }}
       >
-        <View style={styles.identity}>
-          <Text style={styles.name}>{profile.name || "Your profile"}</Text>
-          {metaLine ? <Text style={styles.meta}>{metaLine}</Text> : null}
-          <View style={styles.stats}>
-            <Text style={styles.stat}>
-              {profile.interests.length} interest{profile.interests.length === 1 ? "" : "s"}
-            </Text>
-            <Text style={styles.statDot}>•</Text>
-            <Text style={styles.stat}>
-              {profile.preferences.length} preference{profile.preferences.length === 1 ? "" : "s"}
-            </Text>
+        <View style={styles.bannerBleed} />
+        <View style={[styles.cover, { height: 132 + insets.top }]}>
+          <View style={[styles.coverBar, { paddingTop: insets.top + TAB_HEADER_PAD_TOP }]}>
+            <BrandLogo height={BRAND_LOGO_HEIGHT} />
           </View>
-          {profile.bio ? <Text style={styles.bio}>{profile.bio}</Text> : (
-            <Text style={styles.bio}>Tell dealers who you are and what you want. Nothing here is shared as a phone number or email.</Text>
-          )}
+        </View>
+
+        <View style={styles.hero}>
+          <TouchableOpacity
+            style={styles.avatarBtn}
+            activeOpacity={0.85}
+            onPress={() =>
+              promptProfilePhoto({
+                hasPhoto: !!profile.photoUrl,
+                onPicked: async (uri) => {
+                  setPhotoBusy(true);
+                  try {
+                    await setPhoto(uri);
+                  } finally {
+                    setPhotoBusy(false);
+                  }
+                },
+                onRemoved: () => removePhoto(),
+              })
+            }
+          >
+            <View style={styles.avatar}>
+              {profile.photoUrl ? (
+                <Image source={{ uri: profile.photoUrl }} style={styles.avatarImage} contentFit="cover" />
+              ) : (
+                <Text style={styles.avatarText}>{initials(profile.name)}</Text>
+              )}
+              {photoBusy ? (
+                <View style={styles.avatarBusy}>
+                  <ActivityIndicator color="#FFFFFF" />
+                </View>
+              ) : null}
+            </View>
+            <View style={styles.cameraBadge}>
+              <Ionicons name="camera" size={14} color={colors.onBrand} />
+            </View>
+          </TouchableOpacity>
+          <Text style={styles.name}>{profile.name || "Your profile"}</Text>
+          {profile.status || profile.location ? (
+            <Text style={styles.headline}>
+              {[profile.status, profile.location].filter(Boolean).join(" · ")}
+            </Text>
+          ) : null}
           <TouchableOpacity style={styles.editBtn} activeOpacity={0.8} onPress={() => router.push("/profile-edit")}>
-            <Ionicons name="pencil" size={15} color={colors.text} />
-            <Text style={styles.editLabel}>Edit Profile</Text>
+            <Text style={styles.editLabel}>Edit profile</Text>
           </TouchableOpacity>
         </View>
 
-        {loading ? <ActivityIndicator style={{ marginTop: 24 }} color={colors.primary} /> : null}
+        {loading ? <ActivityIndicator style={{ marginTop: 16 }} color={colors.primary} /> : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
-        <View style={styles.sectionHead}>
-          <Text style={styles.sectionLabel}>GENERAL PREFERENCES</Text>
-          <TouchableOpacity style={styles.addBtn} onPress={() => router.push("/preference-edit")}>
-            <Ionicons name="add" size={20} color="#FFFFFF" />
-          </TouchableOpacity>
+        <View style={styles.card}>
+          <Text style={[styles.cardTitle, { marginBottom: 8 }]}>About</Text>
+          <Text style={styles.about}>
+            {profile.bio.trim() ||
+              "Add a short intro so salespeople know who you are — commute, family, and what a good deal looks like. They never see your phone or email here."}
+          </Text>
         </View>
-        {profile.preferences.length ? (
-          <View style={styles.chips}>
-            {profile.preferences.map((pref) => {
-              const meta = preferenceMeta(pref.kind);
-              return (
-                <TouchableOpacity
-                  key={pref.id}
-                  style={styles.chip}
-                  onPress={() => router.push({ pathname: "/preference-edit", params: { id: pref.id } })}
-                >
-                  <Ionicons name={meta.icon} size={15} color={meta.color} />
-                  <Text style={styles.chipLabel}>{formatPreference(pref)}</Text>
-                </TouchableOpacity>
-              );
-            })}
+
+        <View style={styles.card}>
+          <View style={styles.cardHead}>
+            <Text style={styles.cardTitle}>Buying details</Text>
+            <TouchableOpacity style={styles.addBtn} onPress={() => router.push("/profile-edit")}>
+              <Ionicons name="pencil" size={14} color={colors.onBrand} />
+            </TouchableOpacity>
           </View>
-        ) : (
-          <TouchableOpacity style={styles.emptyCard} onPress={() => router.push("/preference-edit")}>
-            <Text style={styles.emptyTitle}>Add what you're shopping for</Text>
-            <Text style={styles.emptyCopy}>Body style, budget, mileage, location, or anything else dealers should know.</Text>
-          </TouchableOpacity>
-        )}
-
-        <View style={styles.interestHeader}>
-          <Text style={styles.interestTitle}>Vehicle Interests</Text>
-          <TouchableOpacity style={styles.addBtn} onPress={() => router.push("/interest-edit")}>
-            <Ionicons name="add" size={20} color="#FFFFFF" />
-          </TouchableOpacity>
+          {details.length ? (
+            <TouchableOpacity onPress={() => router.push("/profile-edit")} activeOpacity={0.75}>
+              {details.map((row) => (
+                <DetailRow key={row.label} {...row} />
+              ))}
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={() => router.push("/profile-edit")}>
+              <Text style={styles.emptyCopy}>
+                Timeline, new vs used, payment, and trade-in help a salesperson bring the right offer.
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
-        {profile.interests.length ? (
-          <>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              snapToInterval={CARD_WIDTH + CARD_GAP}
-              decelerationRate="fast"
-              onMomentumScrollEnd={onInterestScroll}
-              contentContainerStyle={styles.carousel}
-            >
-              {profile.interests.map((interest, index) => {
-                const palette = INTEREST_COLORS[index % INTEREST_COLORS.length];
-                const tags = [
-                  ...(interest.color ? [interest.color] : []),
-                  ...interest.tags,
-                ].slice(0, 3);
-                return (
+        <View style={styles.card}>
+          <View style={styles.cardHead}>
+            <Text style={styles.cardTitle}>Looking for</Text>
+            <TouchableOpacity style={styles.addBtn} onPress={() => router.push("/interest-edit")}>
+              <Ionicons name="add" size={18} color={colors.onBrand} />
+            </TouchableOpacity>
+          </View>
+          {profile.interests.length ? (
+            profile.interests.map((interest, index) => (
+              <TouchableOpacity
+                key={interest.id}
+                style={[styles.experience, index < profile.interests.length - 1 && styles.experienceDivider]}
+                onPress={() => router.push({ pathname: "/interest-edit", params: { id: interest.id } })}
+              >
+                <View style={styles.expCopy}>
+                  <Text style={styles.expTitle}>{interestTitle(interest) || "Vehicle"}</Text>
+                  <Text style={styles.expMeta}>{interestMeta(interest) || "Tap to add years and details"}</Text>
+                  {interest.tags.length || interest.color ? (
+                    <Text style={styles.expTags} numberOfLines={1}>
+                      {[interest.color, ...interest.tags].filter(Boolean).join(" · ")}
+                    </Text>
+                  ) : null}
+                </View>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <TouchableOpacity onPress={() => router.push("/interest-edit")}>
+              <Text style={styles.emptyCopy}>Name the vehicles you want. Dealers unlock an interest to chat.</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <View style={styles.card}>
+          <View style={styles.cardHead}>
+            <Text style={styles.cardTitle}>Shopping criteria</Text>
+            <TouchableOpacity style={styles.addBtn} onPress={() => router.push("/preference-edit")}>
+              <Ionicons name="add" size={18} color={colors.onBrand} />
+            </TouchableOpacity>
+          </View>
+          {profile.preferences.length ? (
+            <View style={styles.chips}>
+              {profile.preferences.map((pref) => (
                   <TouchableOpacity
-                    key={interest.id}
-                    activeOpacity={0.9}
-                    onPress={() => router.push({ pathname: "/interest-edit", params: { id: interest.id } })}
+                    key={pref.id}
+                    style={styles.chip}
+                    onPress={() => router.push({ pathname: "/preference-edit", params: { id: pref.id } })}
                   >
-                    <LinearGradient
-                      colors={palette}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={styles.interestCard}
-                    >
-                      <View style={styles.carIcon}>
-                        <Ionicons name="car-sport" size={18} color={colors.primary} />
-                      </View>
-                      <Text style={styles.interestName}>{interestTitle(interest)}</Text>
-                      <Text style={styles.interestMeta}>{interestMeta(interest) || "Tap to add details"}</Text>
-                      {tags.length ? (
-                        <View style={styles.interestTags}>
-                          {tags.map((tag) => (
-                            <View key={tag} style={styles.interestTag}>
-                              <Text style={styles.interestTagText}>{tag}</Text>
-                            </View>
-                          ))}
-                        </View>
-                      ) : null}
-                    </LinearGradient>
+                    <Text style={styles.chipLabel}>{formatPreference(pref)}</Text>
                   </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-            {profile.interests.length > 1 ? (
-              <View style={styles.dots}>
-                {profile.interests.map((interest, index) => (
-                  <View
-                    key={interest.id}
-                    style={[styles.dot, index === interestIndex && styles.dotActive]}
-                  />
-                ))}
-              </View>
-            ) : null}
-          </>
-        ) : (
-          <TouchableOpacity style={styles.emptyCard} onPress={() => router.push("/interest-edit")}>
-            <Text style={styles.emptyTitle}>Name a vehicle you want</Text>
-            <Text style={styles.emptyCopy}>Make, model, years, color, and must-haves. Dealers unlock an interest to chat.</Text>
-          </TouchableOpacity>
-        )}
+              ))}
+            </View>
+          ) : (
+            <TouchableOpacity onPress={() => router.push("/preference-edit")}>
+              <Text style={styles.emptyCopy}>Budget, body style, mileage, and area — the filters salespeople scan first.</Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
         <TouchableOpacity style={styles.signOutBtn} activeOpacity={0.8} onPress={() => logout()}>
           <Text style={styles.signOutLabel}>Sign out</Text>
@@ -191,89 +215,172 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  content: {
-    paddingBottom: 28,
+  bannerBleed: {
+    height: 420,
+    marginTop: -420,
+    backgroundColor: "#06102A",
   },
-  identity: {
-    paddingHorizontal: 24,
+  cover: {
+    backgroundColor: "#06102A",
+  },
+  coverBar: {
+    paddingHorizontal: TAB_HEADER_PAD_X,
+  },
+  hero: {
+    paddingHorizontal: 20,
+    marginTop: -36,
+  },
+  avatarBtn: {
+    alignSelf: "flex-start",
+  },
+  avatar: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: "#0A1B4A",
+    borderWidth: 4,
+    borderColor: colors.background,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  avatarImage: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  avatarBusy: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(6,16,42,0.45)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarText: {
+    fontFamily: fonts.display,
+    fontSize: 28,
+    color: "#FFFFFF",
+  },
+  cameraBadge: {
+    position: "absolute",
+    right: 2,
+    bottom: 2,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: colors.brand,
+    borderWidth: 2,
+    borderColor: colors.background,
+    alignItems: "center",
+    justifyContent: "center",
   },
   name: {
-    fontFamily: fonts.bold,
+    marginTop: 12,
+    fontFamily: fonts.display,
     fontSize: 28,
+    lineHeight: 34,
+    letterSpacing: -0.6,
     color: colors.text,
   },
-  meta: {
-    marginTop: 6,
+  headline: {
+    marginTop: 4,
     fontFamily: fonts.regular,
-    fontSize: 14,
-    color: colors.textMuted,
+    fontSize: 15,
+    lineHeight: 21,
+    color: colors.textSecondary,
   },
-  stats: {
+  editBtn: {
+    marginTop: 14,
+    height: 40,
+    borderRadius: 999,
+    borderWidth: 1.5,
+    borderColor: colors.brand,
+    paddingHorizontal: 16,
+    alignSelf: "flex-start",
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    marginTop: 10,
   },
-  stat: {
+  editLabel: {
+    fontFamily: fonts.semibold,
+    fontSize: 14,
+    color: colors.brand,
+  },
+  error: {
+    marginTop: 12,
+    paddingHorizontal: 20,
     fontFamily: fonts.regular,
     fontSize: 13,
-    color: colors.textSecondary,
+    color: colors.red,
   },
-  statDot: {
-    color: colors.textMuted,
-    fontSize: 13,
+  card: {
+    marginTop: 12,
+    marginHorizontal: 16,
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 16,
   },
-  bio: {
-    marginTop: 14,
+  cardHead: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  cardTitle: {
+    fontFamily: fonts.displaySemi,
+    fontSize: 18,
+    color: colors.text,
+  },
+  about: {
     fontFamily: fonts.regular,
     fontSize: 14,
     lineHeight: 21,
     color: colors.textSecondary,
   },
-  editBtn: {
-    marginTop: 18,
-    width: "100%",
-    height: 48,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
+  detailRow: {
+    paddingVertical: 8,
   },
-  editLabel: {
+  detailLabel: {
+    fontFamily: fonts.regular,
+    fontSize: 12,
+    color: colors.textMuted,
+  },
+  detailValue: {
+    marginTop: 2,
     fontFamily: fonts.semibold,
     fontSize: 15,
     color: colors.text,
   },
-  error: {
-    marginTop: 12,
-    paddingHorizontal: 24,
+  experience: {
+    paddingVertical: 10,
+  },
+  experienceDivider: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  expCopy: {
+    flex: 1,
+  },
+  expTitle: {
+    fontFamily: fonts.semibold,
+    fontSize: 16,
+    color: colors.text,
+  },
+  expMeta: {
+    marginTop: 2,
     fontFamily: fonts.regular,
     fontSize: 13,
-    color: colors.red,
+    color: colors.textSecondary,
   },
-  sectionHead: {
-    marginTop: 28,
-    marginBottom: 12,
-    paddingHorizontal: 24,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  sectionLabel: {
-    fontFamily: fonts.semibold,
-    fontSize: 11,
-    letterSpacing: 0.8,
+  expTags: {
+    marginTop: 4,
+    fontFamily: fonts.regular,
+    fontSize: 12,
     color: colors.textMuted,
   },
   chips: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
-    paddingHorizontal: 24,
   },
   chip: {
     flexDirection: "row",
@@ -291,115 +398,23 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.text,
   },
-  emptyCard: {
-    marginHorizontal: 24,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.chipBorder,
-    borderStyle: "dashed",
-    padding: 16,
-  },
-  emptyTitle: {
-    fontFamily: fonts.semibold,
-    fontSize: 15,
-    color: colors.text,
-  },
   emptyCopy: {
-    marginTop: 6,
     fontFamily: fonts.regular,
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 14,
+    lineHeight: 20,
     color: colors.textMuted,
-  },
-  interestHeader: {
-    marginTop: 28,
-    marginBottom: 14,
-    paddingHorizontal: 24,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  interestTitle: {
-    fontFamily: fonts.bold,
-    fontSize: 18,
-    color: colors.text,
   },
   addBtn: {
     width: 28,
     height: 28,
-    borderRadius: 8,
-    backgroundColor: colors.primary,
+    borderRadius: 14,
+    backgroundColor: colors.brand,
     alignItems: "center",
     justifyContent: "center",
-  },
-  carousel: {
-    paddingHorizontal: 24,
-    gap: CARD_GAP,
-  },
-  interestCard: {
-    width: CARD_WIDTH,
-    minHeight: 148,
-    borderRadius: 20,
-    padding: 18,
-  },
-  carIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    backgroundColor: "rgba(255,255,255,0.95)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 12,
-  },
-  interestName: {
-    fontFamily: fonts.bold,
-    fontSize: 20,
-    color: "#FFFFFF",
-  },
-  interestMeta: {
-    marginTop: 2,
-    fontFamily: fonts.regular,
-    fontSize: 13,
-    color: "rgba(255,255,255,0.85)",
-  },
-  interestTags: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
-    marginTop: 12,
-  },
-  interestTag: {
-    backgroundColor: "rgba(255,255,255,0.18)",
-    borderRadius: 999,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-  },
-  interestTagText: {
-    fontFamily: fonts.semibold,
-    fontSize: 11,
-    color: "#FFFFFF",
-  },
-  dots: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 6,
-    marginTop: 14,
-  },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#D1D5DB",
-  },
-  dotActive: {
-    backgroundColor: colors.primary,
-    width: 7,
-    height: 7,
-    borderRadius: 4,
   },
   signOutBtn: {
-    marginTop: 28,
-    marginHorizontal: 24,
+    marginTop: 20,
+    marginHorizontal: 20,
     height: 48,
     alignItems: "center",
     justifyContent: "center",

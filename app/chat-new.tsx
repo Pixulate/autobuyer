@@ -1,4 +1,5 @@
 import { FormScaffold, formStyles } from "@/components/FormScaffold";
+import { colors } from "@/constants/theme";
 import { useChat } from "@/lib/chat";
 import { router } from "expo-router";
 import { useState } from "react";
@@ -16,7 +17,7 @@ export default function ChatNewScreen() {
     try {
       const other = await findUserByEmail(email);
       if (!other) {
-        setError("No AutoQuest account uses that email.");
+        setError("No Carloop account uses that email.");
         return;
       }
       const id = await openConversation(other);
@@ -34,11 +35,11 @@ export default function ChatNewScreen() {
       onClose={() => router.back()}
       footer={
         <TouchableOpacity style={formStyles.primaryBtn} onPress={onStart} disabled={busy}>
-          {busy ? <ActivityIndicator color="#fff" /> : <Text style={formStyles.primaryLabel}>Start encrypted chat</Text>}
+          {busy ? <ActivityIndicator color={colors.onBrand} /> : <Text style={formStyles.primaryLabel}>Start encrypted chat</Text>}
         </TouchableOpacity>
       }
     >
-      <Text style={formStyles.label}>Their AutoQuest email</Text>
+      <Text style={formStyles.label}>Their Carloop email</Text>
       <TextInput
         style={formStyles.input}
         value={email}
@@ -48,7 +49,7 @@ export default function ChatNewScreen() {
         placeholder="dealer@example.com"
       />
       <Text style={formStyles.hint}>
-        This looks them up inside AutoQuest. The thread is encrypted; it never shares your phone number.
+        This looks them up inside Carloop. The thread is encrypted; it never shares your phone number.
       </Text>
       {error ? <Text style={formStyles.error}>{error}</Text> : null}
     </FormScaffold>

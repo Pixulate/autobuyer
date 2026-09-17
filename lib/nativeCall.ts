@@ -1,6 +1,7 @@
 import * as Crypto from "expo-crypto";
 import { NativeModules, Platform } from "react-native";
 import { reportError } from "@/lib/errors";
+import { handoffToNativeCall } from "@/modules/call-handoff";
 
 type CallKeepModule = {
   setup: (options: object) => Promise<boolean>;
@@ -26,6 +27,7 @@ type CallKeepModule = {
   endCall: (uuid: string) => void;
   rejectCall: (uuid: string) => void;
   setCurrentCallActive: (uuid: string) => void;
+  answerIncomingCall?: (uuid: string) => void;
   backToForeground: () => void;
   getInitialEvents?: () => Promise<Array<{ name: string; data?: { callUUID?: string } }>>;
   addEventListener: (type: string, handler: (args: { callUUID?: string }) => void) => { remove?: () => void };
@@ -34,15 +36,15 @@ type CallKeepModule = {
 
 const OPTIONS = {
   ios: {
-    appName: "AutoQuest",
+    appName: "Carloop",
     supportsVideo: false,
     maximumCallGroups: "1",
     maximumCallsPerCallGroup: "1",
     includesCallsInRecents: true,
   },
   android: {
-    alertTitle: "Phone account for AutoQuest",
-    alertDescription: "Allow AutoQuest to show native incoming and outgoing calls.",
+    alertTitle: "Phone account for Carloop",
+    alertDescription: "Allow Carloop to show native incoming and outgoing calls.",
     cancelButton: "Cancel",
     okButton: "Allow",
     additionalPermissions: [],
@@ -50,7 +52,7 @@ const OPTIONS = {
     foregroundService: {
       channelId: "incoming-calls",
       channelName: "Incoming calls",
-      notificationTitle: "AutoQuest call",
+      notificationTitle: "Carloop call",
     },
   },
 };
@@ -90,7 +92,7 @@ export function hasNativeCalling() {
 function loadCallKeep(): CallKeepModule | null {
   if (Platform.OS === "web") return null;
   if (!NativeModules.RNCallKeep) {
-    console.warn("[AutoQuest] RNCallKeep native module missing. Rebuild the dev client after adding CallKeep.");
+    console.warn("[Carloop] RNCallKeep native module missing. Rebuild the dev client after adding CallKeep.");
     return null;
   }
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -116,9 +118,9 @@ export async function setupNativeCalling() {
       if (callId && args.callUUID) bindCallUuid(String(callId), args.callUUID);
     });
     keep.addEventListener("didReceiveStartCallAction", (args: { callUUID?: string }) => {
-      if (args.callUUID) activateOutgoing(args.callUUID);
+      if (args.callUUID) presentNativeCallUi(args.callUUID);
     });
-    console.log("[AutoQuest] Native calling (CallKit / ConnectionService) is ready.");
+    console.log("[Carloop] Native calling (CallKit / ConnectionService) is ready.");
     return true;
   } catch (error) {
     reportError("Setting up native calling", error, { alert: false });
@@ -134,14 +136,16 @@ function activateOutgoing(uuid: string) {
   keep.setCurrentCallActive(uuid);
 }
 
+function presentNativeCallUi(uuid: string) {
+  activateOutgoing(uuid);
+  void handoffToNativeCall(uuid);
+}
+
 export function showNativeIncoming(callId: string, callerName: string, nativeUuid?: string) {
   if (!hasNativeCalling() || !keep) return false;
   const uuid = nativeUuid ? bindCallUuid(callId, nativeUuid) : uuidForCall(callId);
   try {
-    keep.displayIncomingCall(uuid, callerName || "AutoQuest", callerName || "Dealer", "generic", false);
-    if (Platform.OS === "android") {
-      keep.backToForeground();
-    }
+    keep.displayIncomingCall(uuid, "0000000000", callerName || "Dealer", "number", false);
     return true;
   } catch (error) {
     reportError("Showing native incoming call", error, { alert: false });
@@ -154,13 +158,10 @@ export function startNativeOutgoing(callId: string, calleeName: string, nativeUu
   const uuid = nativeUuid ? bindCallUuid(callId, nativeUuid) : uuidForCall(callId);
   const name = calleeName || "Dealer";
   try {
-    keep.startCall(uuid, name, name, "generic", false);
-    activateOutgoing(uuid);
-    setTimeout(() => activateOutgoing(uuid), 300);
-    setTimeout(() => activateOutgoing(uuid), 900);
-    if (Platform.OS === "android") {
-      keep.backToForeground();
-    }
+    keep.startCall(uuid, "0000000000", name, "number", false);
+    presentNativeCallUi(uuid);
+    setTimeout(() => presentNativeCallUi(uuid), 400);
+    setTimeout(() => presentNativeCallUi(uuid), 1200);
     return true;
   } catch (error) {
     reportError("Starting native outgoing call", error, { alert: false });
@@ -173,8 +174,12 @@ export function setNativeCallConnected(callId: string) {
   const uuid = uuidByCallId.get(callId);
   if (!uuid) return;
   try {
+    keep.answerIncomingCall?.(uuid);
     keep.reportConnectedOutgoingCallWithUUID?.(uuid);
     keep.setCurrentCallActive(uuid);
+    setTimeout(() => {
+      void handoffToNativeCall(uuid);
+    }, 250);
   } catch (error) {
     reportError("Marking native call active", error, { alert: false });
   }

@@ -23,8 +23,8 @@ const SWIFT_METHODS = `
       ?? UUID().uuidString
     let callerName = (dict["callerName"] as? String)
       ?? (dict["caller"] as? String)
-      ?? "AutoQuest"
-    let handle = (dict["handle"] as? String) ?? "AutoQuest"
+      ?? "Carloop"
+    let handle = (dict["handle"] as? String) ?? "Carloop"
     let extra: [AnyHashable: Any] = [
       "uuid": uuid,
       "callId": dict["callId"] ?? "",
@@ -68,7 +68,7 @@ function withIosVoipAppDelegate(config) {
         `bindReactNativeFactory(factory)
     RNVoipPushNotificationManager.voipRegistration()
     RNCallKeep.setup([
-      "appName": "AutoQuest",
+      "appName": "Carloop",
       "supportsVideo": false,
       "maximumCallGroups": "1",
       "maximumCallsPerCallGroup": "1",
@@ -104,7 +104,7 @@ function withAndroidCallUi(config) {
       (item) => item.$["android:name"] === "io.wazo.callkeep.VoiceConnectionService"
     );
     if (voice) {
-      voice.$["android:label"] = "AutoQuest";
+      voice.$["android:label"] = "Carloop";
       voice.$["android:foregroundServiceType"] = "phoneCall|microphone";
     }
     return config;

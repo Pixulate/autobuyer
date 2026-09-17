@@ -28,7 +28,7 @@ export function AppTabBar({ state, navigation }: BottomTabBarProps) {
         {state.routes.map((route, index) => {
           const focused = state.index === index;
           const icons = ICONS[route.name] ?? ICONS.home;
-          const color = focused ? colors.primary : colors.tabInactive;
+          const color = focused ? colors.onBrand : colors.tabInactive;
 
           return (
             <TouchableOpacity
@@ -72,14 +72,16 @@ const styles = StyleSheet.create({
   bar: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
     borderRadius: 28,
     paddingVertical: 8,
     paddingHorizontal: 8,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.12,
-    shadowRadius: 24,
+    borderWidth: 1,
+    borderColor: colors.washStrong,
+    shadowColor: colors.brandInk,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
     elevation: 10,
   },
   tab: {
@@ -91,7 +93,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   tabActive: {
-    backgroundColor: "#E8F1FF",
+    backgroundColor: colors.brand,
   },
   label: {
     fontSize: 11,

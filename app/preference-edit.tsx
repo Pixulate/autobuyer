@@ -132,7 +132,7 @@ export default function PreferenceEditScreen() {
         kind ? (
           <View>
             <TouchableOpacity style={formStyles.primaryBtn} onPress={onSave} disabled={busy}>
-              {busy ? <ActivityIndicator color="#fff" /> : <Text style={formStyles.primaryLabel}>Save</Text>}
+              {busy ? <ActivityIndicator color={colors.onBrand} /> : <Text style={formStyles.primaryLabel}>Save</Text>}
             </TouchableOpacity>
             {existing ? (
               <TouchableOpacity style={formStyles.dangerBtn} onPress={onDelete}>
@@ -167,7 +167,6 @@ export default function PreferenceEditScreen() {
 
           {kind === "body" ? (
             <>
-              <Text style={formStyles.label}>Body style</Text>
               <View style={formStyles.chips}>
                 {BODY_STYLES.map((style) => {
                   const on = bodyStyle === style;
@@ -193,7 +192,6 @@ export default function PreferenceEditScreen() {
 
           {kind === "budget" ? (
             <>
-              <Text style={formStyles.label}>Price range</Text>
               <View style={formStyles.row}>
                 <TextInput
                   style={[formStyles.input, formStyles.flex]}
@@ -216,7 +214,6 @@ export default function PreferenceEditScreen() {
 
           {kind === "mileage" ? (
             <>
-              <Text style={formStyles.label}>Mileage</Text>
               <View style={formStyles.row}>
                 <TextInput
                   style={[formStyles.input, formStyles.flex]}
@@ -317,7 +314,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.semibold,
     fontSize: 13,
     color: colors.primary,
-    marginBottom: 4,
+    marginBottom: 12,
   },
   toggle: {
     flexDirection: "row",

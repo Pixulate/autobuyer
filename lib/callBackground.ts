@@ -6,7 +6,7 @@ export const CALL_NOTIFICATION_TASK = "AQ_INCOMING_CALL";
 
 TaskManager.defineTask(CALL_NOTIFICATION_TASK, async ({ data, error }) => {
   if (error) {
-    console.error("[AutoQuest] Incoming-call background task", error);
+    console.error("[Carloop] Incoming-call background task", error);
     return;
   }
   const payload =
@@ -31,6 +31,6 @@ export async function registerCallBackgroundTask() {
   try {
     await Notifications.registerTaskAsync(CALL_NOTIFICATION_TASK);
   } catch (error) {
-    console.warn("[AutoQuest] Could not register background call task", error);
+    console.warn("[Carloop] Could not register background call task", error);
   }
 }

@@ -1,8 +1,9 @@
+import { BrandLogo } from "@/components/ScreenHeader";
 import { globalStyles } from "@/app/_layout";
 import { onboardingStyles } from "@/app/(onboarding)/onboarding";
+import { colors } from "@/constants/theme";
 import { useAuth } from "@/lib/auth";
 import { reportError } from "@/lib/errors";
-import { Image } from "expo-image";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -64,7 +65,7 @@ export default function Login() {
   };
 
   return (
-    <View style={{ width: "100%", height: "100%", backgroundColor: "white" }}>
+    <View style={{ width: "100%", height: "100%", backgroundColor: colors.background }}>
       <SafeAreaView style={onboardingStyles.onboardingPage}>
         <View
           style={{
@@ -76,16 +77,7 @@ export default function Login() {
             alignItems: "center",
           }}
         >
-          <Image
-            tintColor={"#00E567"}
-            source={require("@/assets/icons/company/tire.svg")}
-            placeholder={"tire"}
-            style={{ width: 25, height: 25 }}
-            contentFit="contain"
-          />
-          <Text style={[globalStyles.funnelSemiBold, { textAlign: "center", fontSize: 24, color: "#00E567" }]}>
-            autoquest
-          </Text>
+          <BrandLogo height={28} />
         </View>
 
         <KeyboardAvoidingView
@@ -154,7 +146,7 @@ export default function Login() {
             >
               <Text style={[globalStyles.h4, { fontSize: 15, textAlign: "center", marginTop: 15 }]}>
                 {mode === "login" ? "Need an account?" : "Already have an account?"}
-                <Text style={{ color: "blue" }}>
+                <Text style={{ color: colors.accent }}>
                   {mode === "login" ? " Create one" : " Log in"}
                 </Text>
               </Text>
@@ -174,14 +166,14 @@ const styles = StyleSheet.create({
   input: {
     width: "100%",
     height: 58,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: colors.border,
     paddingHorizontal: 16,
     marginBottom: 12,
     fontFamily: "400",
     fontSize: 16,
-    color: "black",
-    backgroundColor: "white",
+    color: colors.text,
+    backgroundColor: "#FFFFFF",
   },
 });

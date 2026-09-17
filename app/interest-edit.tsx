@@ -95,7 +95,7 @@ export default function InterestEditScreen() {
       footer={
         <View>
           <TouchableOpacity style={formStyles.primaryBtn} onPress={onSave} disabled={busy}>
-            {busy ? <ActivityIndicator color="#fff" /> : <Text style={formStyles.primaryLabel}>Save</Text>}
+            {busy ? <ActivityIndicator color={colors.onBrand} /> : <Text style={formStyles.primaryLabel}>Save</Text>}
           </TouchableOpacity>
           {existing ? (
             <TouchableOpacity style={formStyles.dangerBtn} onPress={onDelete}>

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "AutoQuest",
+    "name": "Carloop",
     "slug": "autobuyer",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -13,7 +13,9 @@
       "bundleIdentifier": "com.autoquest.autobuyer",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSMicrophoneUsageDescription": "AutoQuest uses the microphone for in-app calls with dealers.",
+        "NSMicrophoneUsageDescription": "Carloop uses the microphone for in-app calls with dealers.",
+        "NSCameraUsageDescription": "Carloop uses the camera for your buyer profile picture.",
+        "NSPhotoLibraryUsageDescription": "Carloop uses your photos for your buyer profile picture.",
         "UIBackgroundModes": ["audio", "voip", "remote-notification", "fetch"]
       }
     },
@@ -52,7 +54,7 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 0,
           "resizeMode": "contain",
-          "backgroundColor": "#00E567"
+          "backgroundColor": "#0060F8"
         }
       ],
       "expo-secure-store",
@@ -64,7 +66,14 @@
       ],
       "@config-plugins/react-native-callkeep",
       "./plugins/withVoipCallKeep",
-      "expo-task-manager"
+      "expo-task-manager",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Carloop uses your photos for your buyer profile picture.",
+          "cameraPermission": "Carloop uses the camera for your buyer profile picture."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
