@@ -1,11 +1,6 @@
 import { saveProfilePhoto } from "@/lib/avatar";
 import { displayNameFor, useAuth } from "@/lib/auth";
-import {
-  emptyProfile,
-  type BuyerPreference,
-  type BuyerProfile,
-  type VehicleInterest,
-} from "@/lib/buyer";
+import { emptyProfile, isDiscoverable, type BuyerPreference, type BuyerProfile, type VehicleInterest } from "@/lib/buyer";
 import { db } from "@/lib/firebase";
 import { reportError } from "@/lib/errors";
 import { doc, onSnapshot, serverTimestamp, setDoc } from "firebase/firestore";
@@ -32,6 +27,16 @@ function str(data: Record<string, unknown>, key: string) {
   return typeof value === "string" ? value : "";
 }
 
+function num(data: Record<string, unknown>, key: string) {
+  const value = data[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function strings(data: Record<string, unknown>, key: string) {
+  const value = data[key];
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+}
+
 function parseProfile(data: Record<string, unknown> | undefined, fallbackName: string): BuyerProfile {
   const base = emptyProfile(fallbackName);
   if (!data) {
@@ -41,6 +46,15 @@ function parseProfile(data: Record<string, unknown> | undefined, fallbackName: s
     name: str(data, "name").trim() ? str(data, "name") : fallbackName,
     status: str(data, "status"),
     location: str(data, "location"),
+    placeId: str(data, "placeId"),
+    lat: num(data, "lat"),
+    lng: num(data, "lng"),
+    geohash: str(data, "geohash"),
+    geohashPrefixes: strings(data, "geohashPrefixes"),
+    locationCity: str(data, "locationCity"),
+    locationRegion: str(data, "locationRegion"),
+    locationCountry: str(data, "locationCountry"),
+    locationPostal: str(data, "locationPostal"),
     bio: str(data, "bio"),
     timeline: str(data, "timeline"),
     condition: str(data, "condition"),
@@ -103,6 +117,7 @@ export function BuyerProvider({ children }: { children: ReactNode }) {
             ...cleaned,
             uid: user.uid,
             email: user.email ?? "",
+            discoverable: isDiscoverable(cleaned),
             updatedAt: serverTimestamp(),
           },
           { merge: true }

@@ -130,14 +130,9 @@ export async function setupNativeCalling() {
   }
 }
 
-function activateOutgoing(uuid: string) {
+function presentNativeCallUi(uuid: string) {
   if (!keep) return;
   keep.reportConnectingOutgoingCallWithUUID?.(uuid);
-  keep.setCurrentCallActive(uuid);
-}
-
-function presentNativeCallUi(uuid: string) {
-  activateOutgoing(uuid);
   void handoffToNativeCall(uuid);
 }
 
@@ -145,7 +140,7 @@ export function showNativeIncoming(callId: string, callerName: string, nativeUui
   if (!hasNativeCalling() || !keep) return false;
   const uuid = nativeUuid ? bindCallUuid(callId, nativeUuid) : uuidForCall(callId);
   try {
-    keep.displayIncomingCall(uuid, "0000000000", callerName || "Dealer", "number", false);
+    keep.displayIncomingCall(uuid, callerName || "Carloop", callerName || "Dealer", "generic", false);
     return true;
   } catch (error) {
     reportError("Showing native incoming call", error, { alert: false });
@@ -158,10 +153,8 @@ export function startNativeOutgoing(callId: string, calleeName: string, nativeUu
   const uuid = nativeUuid ? bindCallUuid(callId, nativeUuid) : uuidForCall(callId);
   const name = calleeName || "Dealer";
   try {
-    keep.startCall(uuid, "0000000000", name, "number", false);
+    keep.startCall(uuid, name, name, "generic", false);
     presentNativeCallUi(uuid);
-    setTimeout(() => presentNativeCallUi(uuid), 400);
-    setTimeout(() => presentNativeCallUi(uuid), 1200);
     return true;
   } catch (error) {
     reportError("Starting native outgoing call", error, { alert: false });

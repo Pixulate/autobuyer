@@ -157,4 +157,4 @@ function withVoipCallKeep(config) {
   return config;
 }
 
-module.exports = createRunOncePlugin(withVoipCallKeep, "withVoipCallKeep", "1.0.0");
+module.exports = createRunOncePlugin(withVoipCallKeep, "withVoipCallKeep", "1.1.0");

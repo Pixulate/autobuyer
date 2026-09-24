@@ -14,6 +14,8 @@ export type BuyerPreference = {
   bodyStyle?: string;
   minPrice?: number;
   maxPrice?: number;
+  minKm?: number;
+  maxKm?: number;
   minMiles?: number;
   maxMiles?: number;
   city?: string;
@@ -36,6 +38,15 @@ export type BuyerProfile = {
   name: string;
   status: string;
   location: string;
+  placeId: string;
+  lat: number | null;
+  lng: number | null;
+  geohash: string;
+  geohashPrefixes: string[];
+  locationCity: string;
+  locationRegion: string;
+  locationCountry: string;
+  locationPostal: string;
   bio: string;
   timeline: string;
   condition: string;
@@ -51,6 +62,15 @@ export const emptyProfile = (name = ""): BuyerProfile => ({
   name,
   status: "",
   location: "",
+  placeId: "",
+  lat: null,
+  lng: null,
+  geohash: "",
+  geohashPrefixes: [],
+  locationCity: "",
+  locationRegion: "",
+  locationCountry: "",
+  locationPostal: "",
   bio: "",
   timeline: "",
   condition: "",
@@ -102,7 +122,7 @@ export const INTEREST_TAG_SUGGESTIONS = [
   "Dealer Maintained",
   "Certified Pre-Owned",
   "AWD",
-  "Low Mileage",
+  "Low kms",
   "One Owner",
   "No Accidents",
 ];
@@ -116,7 +136,7 @@ export const PREFERENCE_KINDS: {
 }[] = [
   { kind: "body", title: "Body style", hint: "SUV, truck, sedan…", icon: "car-sport-outline", color: "#0060F8" },
   { kind: "budget", title: "Price range", hint: "Min and max you're comfortable with", icon: "cash-outline", color: "#F87000" },
-  { kind: "mileage", title: "Mileage", hint: "How many miles is too many", icon: "speedometer-outline", color: "#0047C2" },
+  { kind: "mileage", title: "Kilometres", hint: "How many kilometres is too many", icon: "speedometer-outline", color: "#0047C2" },
   { kind: "location", title: "Location", hint: "City or area you'll buy in", icon: "location-outline", color: "#0A1B4A" },
   { kind: "custom", title: "Something else", hint: "AWD, fuel type, seats…", icon: "add-circle-outline", color: "#3B82F6" },
 ];
@@ -133,12 +153,19 @@ function compactMoney(value: number) {
   return `$${value}`;
 }
 
-function compactMiles(value: number) {
+function compactKm(value: number) {
   if (value >= 1000) {
     const k = value / 1000;
-    return `${Number.isInteger(k) ? k : k.toFixed(1)}K mi`;
+    return `${Number.isInteger(k) ? k : k.toFixed(1)}K km`;
   }
-  return `${value} mi`;
+  return `${value} km`;
+}
+
+function odometerRange(pref: BuyerPreference) {
+  return {
+    min: pref.minKm ?? pref.minMiles,
+    max: pref.maxKm ?? pref.maxMiles,
+  };
 }
 
 export function formatPreference(pref: BuyerPreference) {
@@ -153,11 +180,12 @@ export function formatPreference(pref: BuyerPreference) {
     if (pref.minPrice != null) return `${compactMoney(pref.minPrice)}+`;
   }
   if (pref.kind === "mileage") {
-    if (pref.minMiles != null && pref.maxMiles != null) {
-      return `${compactMiles(pref.minMiles)} – ${compactMiles(pref.maxMiles)}`;
+    const { min, max } = odometerRange(pref);
+    if (min != null && max != null) {
+      return `${compactKm(min)} – ${compactKm(max)}`;
     }
-    if (pref.maxMiles != null) return `Under ${compactMiles(pref.maxMiles)}`;
-    if (pref.minMiles != null) return `${compactMiles(pref.minMiles)}+`;
+    if (max != null) return `Under ${compactKm(max)}`;
+    if (min != null) return `${compactKm(min)}+`;
   }
   if (pref.kind === "location") {
     const city = pref.city?.trim();
@@ -165,6 +193,35 @@ export function formatPreference(pref: BuyerPreference) {
     return city || pref.label;
   }
   return pref.customValue?.trim() || pref.label;
+}
+
+export function hasDiscoverableLocation(profile: Pick<BuyerProfile, "lat" | "lng" | "geohash">) {
+  return profile.lat != null && profile.lng != null && !!profile.geohash;
+}
+
+export type SetupRequirement = {
+  id: string;
+  title: string;
+  hint: string;
+  href: "/profile-edit" | "/interest-edit";
+};
+
+/** Fields sellers need before this buyer should appear in nearby search. */
+export function missingToBeFound(profile: BuyerProfile): SetupRequirement[] {
+  const missing: SetupRequirement[] = [];
+  if (!hasDiscoverableLocation(profile)) {
+    missing.push({
+      id: "location",
+      title: "Add your location",
+      hint: "Dealers search nearby buyers. Without a place, you won’t show up.",
+      href: "/profile-edit",
+    });
+  }
+  return missing;
+}
+
+export function isDiscoverable(profile: BuyerProfile) {
+  return missingToBeFound(profile).length === 0;
 }
 
 export function interestTitle(interest: VehicleInterest) {

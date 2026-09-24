@@ -2,9 +2,10 @@ import Constants from "expo-constants";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import { NativeModules, Platform } from "react-native";
+import { bindCallUuid, setupNativeCalling, showNativeIncoming } from "@/lib/nativeCall";
 import { reportError } from "@/lib/errors";
 import { db } from "@/lib/firebase";
-import { doc, setDoc } from "firebase/firestore";
+import { deleteField, doc, setDoc } from "firebase/firestore";
 
 Notifications.setNotificationHandler({
   handleNotification: async (notification) => {
@@ -18,30 +19,66 @@ Notifications.setNotificationHandler({
   },
 });
 
-async function registerVoipToken(uid: string) {
+function voipApnsEnv() {
+  const devClient = !!(NativeModules.EXDevMenu || NativeModules.EXDevLauncher);
+  if (devClient || __DEV__) return "sandbox";
+  return "production";
+}
+
+function voipBundleId() {
+  return Constants.expoConfig?.ios?.bundleIdentifier || "com.autoquest.autobuyer";
+}
+
+function cleanToken(token: string) {
+  return String(token || "").replace(/[<>\s]/g, "").toLowerCase();
+}
+
+let voipRegisteredFor: string | null = null;
+let lastDevicePushToken = "";
+
+export async function registerVoipToken(uid: string, devicePushToken?: string) {
+  if (devicePushToken) lastDevicePushToken = devicePushToken;
   if (Platform.OS !== "ios" || !NativeModules.RNVoipPushNotificationManager) {
     return;
   }
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const VoipPushNotification = require("react-native-voip-push-notification").default;
-    VoipPushNotification.addEventListener("register", async (token: string) => {
-      await setDoc(
-        doc(db, "users", uid),
-        {
-          voipPushToken: String(token).replace(/[<>\s]/g, "").toLowerCase(),
-          voipApnsSandbox: typeof __DEV__ !== "undefined" ? __DEV__ : true,
-          updatedAt: new Date().toISOString(),
-        },
-        { merge: true }
-      );
-    });
-    VoipPushNotification.addEventListener("notification", (notification: { uuid?: string; data?: { uuid?: string } }) => {
-      const uuid = notification?.uuid || notification?.data?.uuid;
-      if (uuid) {
-        VoipPushNotification.onVoipNotificationCompleted(uuid);
-      }
-    });
+    if (voipRegisteredFor !== uid) {
+      voipRegisteredFor = uid;
+      VoipPushNotification.addEventListener("register", async (token: string) => {
+        const voipPushToken = cleanToken(token);
+        const regular = lastDevicePushToken ? cleanToken(lastDevicePushToken) : "";
+        if (!voipPushToken || (regular && voipPushToken === regular)) {
+          console.warn("[Carloop] PushKit did not return a distinct VoIP token. Native rebuild required.");
+          await setDoc(doc(db, "users", uid), { voipPushToken: deleteField(), updatedAt: new Date().toISOString() }, { merge: true });
+          return;
+        }
+        await setDoc(
+          doc(db, "users", uid),
+          {
+            voipPushToken,
+            voipBundleId: voipBundleId(),
+            voipTopic: `${voipBundleId()}.voip`,
+            voipApnsEnv: voipApnsEnv(),
+            updatedAt: new Date().toISOString(),
+          },
+          { merge: true }
+        );
+      });
+      VoipPushNotification.addEventListener("notification", (notification: Record<string, unknown>) => {
+        const data = (notification?.data as Record<string, unknown> | undefined) ?? notification;
+        const uuid = String(data?.uuid || data?.nativeUuid || "");
+        const callId = String(data?.callId || uuid);
+        const name = String(data?.callerName || "Dealer");
+        void (async () => {
+          await setupNativeCalling();
+          if (uuid && callId) bindCallUuid(callId, uuid);
+          if (callId) showNativeIncoming(callId, name, uuid || undefined);
+          if (uuid) VoipPushNotification.onVoipNotificationCompleted(uuid);
+        })();
+      });
+    }
     VoipPushNotification.registerVoipToken();
   } catch (error) {
     reportError("Registering VoIP token", error, { alert: false });
@@ -99,7 +136,7 @@ export async function registerPushToken(uid: string) {
       },
       { merge: true }
     );
-    await registerVoipToken(uid);
+    await registerVoipToken(uid, devicePushToken);
     return token;
   } catch (error) {
     reportError("Registering push token", error, { alert: false });

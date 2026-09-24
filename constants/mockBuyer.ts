@@ -5,7 +5,7 @@ export const buyer = {
   interestCount: 3,
   unlocks: 23,
   rating: 4.9,
-  bio: "Relocating with family and hunting for reliable, low-mileage SUVs. Cash-ready, flexible on color, prefer dealer-maintained history. Open to trade-ins.",
+  bio: "Relocating with family and hunting for reliable, low-km SUVs. Cash-ready, flexible on color, prefer dealer-maintained history. Open to trade-ins.",
   avatar:
     "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=256&h=256&fit=crop&crop=faces",
 };
@@ -13,7 +13,7 @@ export const buyer = {
 export const generalPreferences = [
   { id: "body", label: "SUV / Crossover", icon: "car-sport-outline" as const, color: "#3B82F6" },
   { id: "budget", label: "$28K – $55K", icon: "cash-outline" as const, color: "#22C55E" },
-  { id: "miles", label: "Under 70K mi", icon: "speedometer-outline" as const, color: "#A855F7" },
+  { id: "miles", label: "Under 120K km", icon: "speedometer-outline" as const, color: "#A855F7" },
   { id: "area", label: "LA & Nearby", icon: "location-outline" as const, color: "#EF4444" },
 ];
 
@@ -29,7 +29,7 @@ export const vehicleInterests = [
     id: "model3",
     title: "Tesla Model 3",
     meta: "2021-2024 • Sedan",
-    tags: ["Low Mileage", "White / Black"],
+    tags: ["Low kms", "White / Black"],
     colors: ["#14B8A6", "#0F766E"] as const,
   },
   {
@@ -85,21 +85,21 @@ export const homeMatches = [
     id: "coastal",
     dealer: "Coastal Auto Group",
     vehicle: "2021 BMW X5 xDrive40i",
-    detail: "41K mi • $46,900 • 8 mi away",
+    detail: "66K km • $46,900 • 13 km away",
     status: "New message",
   },
   {
     id: "westside",
     dealer: "Westside Motors",
     vehicle: "2022 Tesla Model 3 Long Range",
-    detail: "18K mi • $34,200 • 12 mi away",
+    detail: "29K km • $34,200 • 19 km away",
     status: "Interest unlocked",
   },
   {
     id: "pacific",
     dealer: "Pacific BMW",
     vehicle: "2020 BMW X5 sDrive40i",
-    detail: "52K mi • $41,500 • 6 mi away",
+    detail: "84K km • $41,500 • 10 km away",
     status: "Viewed your profile",
   },
 ];

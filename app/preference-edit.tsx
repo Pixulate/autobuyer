@@ -1,4 +1,5 @@
 import { FormScaffold, formStyles } from "@/components/FormScaffold";
+import { LocationSearch } from "@/components/LocationSearch";
 import { colors, fonts } from "@/constants/theme";
 import {
   BODY_STYLES,
@@ -41,8 +42,12 @@ export default function PreferenceEditScreen() {
   const [bodyStyle, setBodyStyle] = useState(existing?.bodyStyle ?? "");
   const [minPrice, setMinPrice] = useState(existing?.minPrice != null ? String(existing.minPrice) : "");
   const [maxPrice, setMaxPrice] = useState(existing?.maxPrice != null ? String(existing.maxPrice) : "");
-  const [minMiles, setMinMiles] = useState(existing?.minMiles != null ? String(existing.minMiles) : "");
-  const [maxMiles, setMaxMiles] = useState(existing?.maxMiles != null ? String(existing.maxMiles) : "");
+  const [minKm, setMinKm] = useState(
+    existing?.minKm != null ? String(existing.minKm) : existing?.minMiles != null ? String(existing.minMiles) : ""
+  );
+  const [maxKm, setMaxKm] = useState(
+    existing?.maxKm != null ? String(existing.maxKm) : existing?.maxMiles != null ? String(existing.maxMiles) : ""
+  );
   const [city, setCity] = useState(existing?.city ?? profile.location);
   const [nearby, setNearby] = useState(existing?.nearby ?? true);
   const [customValue, setCustomValue] = useState(existing?.customValue ?? "");
@@ -60,8 +65,10 @@ export default function PreferenceEditScreen() {
       bodyStyle: bodyStyle.trim() || undefined,
       minPrice: parseNumber(minPrice),
       maxPrice: parseNumber(maxPrice),
-      minMiles: parseNumber(minMiles),
-      maxMiles: parseNumber(maxMiles),
+      minKm: parseNumber(minKm),
+      maxKm: parseNumber(maxKm),
+      minMiles: undefined,
+      maxMiles: undefined,
       city: city.trim() || undefined,
       nearby: kind === "location" ? nearby : undefined,
       customValue: customValue.trim() || undefined,
@@ -84,8 +91,8 @@ export default function PreferenceEditScreen() {
       setError("Add a minimum, maximum, or both.");
       return;
     }
-    if (kind === "mileage" && pref.minMiles == null && pref.maxMiles == null) {
-      setError("Add a mileage cap or range.");
+    if (kind === "mileage" && pref.minKm == null && pref.maxKm == null) {
+      setError("Add a kilometre cap or range.");
       return;
     }
     if (kind === "location" && !pref.city) {
@@ -217,31 +224,33 @@ export default function PreferenceEditScreen() {
               <View style={formStyles.row}>
                 <TextInput
                   style={[formStyles.input, formStyles.flex]}
-                  value={minMiles}
-                  onChangeText={setMinMiles}
+                  value={minKm}
+                  onChangeText={setMinKm}
                   keyboardType="number-pad"
-                  placeholder="Min miles"
+                  placeholder="Min km"
                 />
                 <TextInput
                   style={[formStyles.input, formStyles.flex]}
-                  value={maxMiles}
-                  onChangeText={setMaxMiles}
+                  value={maxKm}
+                  onChangeText={setMaxKm}
                   keyboardType="number-pad"
-                  placeholder="Max miles"
+                  placeholder="Max km"
                 />
               </View>
-              <Text style={formStyles.hint}>Most buyers only fill in a max, like 70000.</Text>
+              <Text style={formStyles.hint}>Most buyers only fill in a max, like 120000.</Text>
             </>
           ) : null}
 
           {kind === "location" ? (
             <>
               <Text style={formStyles.label}>City or area</Text>
-              <TextInput
-                style={formStyles.input}
+              <LocationSearch
                 value={city}
                 onChangeText={setCity}
-                placeholder="Los Angeles, CA"
+                onResolved={(next) => {
+                  if (next) setCity(next.city || next.label);
+                }}
+                placeholder="City or neighborhood"
               />
               <TouchableOpacity style={styles.toggle} onPress={() => setNearby(!nearby)} activeOpacity={0.8}>
                 <Ionicons

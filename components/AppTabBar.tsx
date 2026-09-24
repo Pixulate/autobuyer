@@ -7,13 +7,13 @@ import { colors, fonts } from "@/constants/theme";
 
 const ICONS: Record<string, { active: keyof typeof Ionicons.glyphMap; idle: keyof typeof Ionicons.glyphMap }> = {
   home: { active: "home", idle: "home-outline" },
-  messages: { active: "chatbubble", idle: "chatbubble-outline" },
+  messages: { active: "file-tray", idle: "file-tray-outline" },
   profile: { active: "person", idle: "person-outline" },
 };
 
 const LABELS: Record<string, string> = {
   home: "Home",
-  messages: "Messages",
+  messages: "Inbox",
   profile: "Profile",
 };
 

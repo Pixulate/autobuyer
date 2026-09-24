@@ -197,7 +197,7 @@ export default function ProfileScreen() {
             </View>
           ) : (
             <TouchableOpacity onPress={() => router.push("/preference-edit")}>
-              <Text style={styles.emptyCopy}>Budget, body style, mileage, and area — the filters salespeople scan first.</Text>
+              <Text style={styles.emptyCopy}>Budget, body style, kilometres, and area — the filters salespeople scan first.</Text>
             </TouchableOpacity>
           )}
         </View>

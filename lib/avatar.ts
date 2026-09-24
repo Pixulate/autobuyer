@@ -1,5 +1,6 @@
 import { reportError } from "@/lib/errors";
 import { storage } from "@/lib/firebase";
+import { requireOptionalNativeModule } from "expo-modules-core";
 import { updateProfile, type User } from "firebase/auth";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { Alert } from "react-native";
@@ -7,20 +8,23 @@ import { Alert } from "react-native";
 type ImagePickerModule = typeof import("expo-image-picker");
 
 function loadImagePicker(): ImagePickerModule | null {
-  try {
-    return require("expo-image-picker") as ImagePickerModule;
-  } catch {
+  if (!requireOptionalNativeModule("ExponentImagePicker")) {
     return null;
   }
+  return require("expo-image-picker") as ImagePickerModule;
+}
+
+function missingNativePicker() {
+  Alert.alert(
+    "Rebuild required",
+    "Photo picking needs a new native build that includes expo-image-picker. Restart Metro after that rebuild."
+  );
 }
 
 async function pick(source: "camera" | "library") {
   const ImagePicker = loadImagePicker();
   if (!ImagePicker) {
-    Alert.alert(
-      "Rebuild required",
-      "Photo picking needs a new native build that includes expo-image-picker."
-    );
+    missingNativePicker();
     return null;
   }
 

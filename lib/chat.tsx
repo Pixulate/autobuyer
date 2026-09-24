@@ -38,6 +38,21 @@ export type Conversation = {
   lastPreview?: string;
 };
 
+export type VehicleOfferPayload = {
+  vehicleId: string;
+  title: string;
+  priceLabel: string;
+  detail: string;
+  photo?: string;
+  photos?: string[];
+  make?: string;
+  model?: string;
+  year?: string;
+  km?: number | null;
+  bodyStyle?: string;
+  dealer: string;
+};
+
 export type ChatMessage = {
   id: string;
   senderId: string;
@@ -46,6 +61,8 @@ export type ChatMessage = {
   ciphertext?: string;
   text?: string;
   type?: string;
+  imageUrl?: string;
+  vehicle?: VehicleOfferPayload;
 };
 
 type ChatContextValue = {
@@ -253,6 +270,30 @@ export function useChat() {
   return ctx;
 }
 
+export async function sendChatImage(opts: {
+  conversationId: string;
+  senderId: string;
+  users: string[];
+  imageUrl: string;
+}) {
+  try {
+    await addDoc(collection(db, "conversations", opts.conversationId, "messages"), {
+      senderId: opts.senderId,
+      users: opts.users,
+      type: "image",
+      imageUrl: opts.imageUrl,
+      createdAt: serverTimestamp(),
+    });
+    await updateDoc(doc(db, "conversations", opts.conversationId), {
+      lastMessageAt: serverTimestamp(),
+      lastPreview: "Photo",
+    });
+  } catch (error) {
+    reportError("Sending photo", error);
+    throw error;
+  }
+}
+
 export async function sendEncryptedMessage(opts: {
   conversationId: string;
   senderId: string;
@@ -298,6 +339,8 @@ export function listenMessages(conversationId: string, uid: string, onRows: (row
           ciphertext: data.ciphertext,
           text: data.text,
           type: data.type,
+          imageUrl: data.imageUrl,
+          vehicle: data.vehicle as VehicleOfferPayload | undefined,
         } satisfies ChatMessage;
       });
       rows.sort((a, b) => (a.createdAt?.toMillis?.() ?? 0) - (b.createdAt?.toMillis?.() ?? 0));

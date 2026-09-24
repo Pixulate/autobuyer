@@ -1,14 +1,17 @@
 import { FormScaffold, formStyles } from "@/components/FormScaffold";
+import { LocationSearch } from "@/components/LocationSearch";
 import { colors, fonts } from "@/constants/theme";
 import { promptProfilePhoto } from "@/lib/avatar";
 import {
   CONDITION_OPTIONS,
+  hasDiscoverableLocation,
   PAYMENT_OPTIONS,
   PREAPPROVED_OPTIONS,
   STATUS_OPTIONS,
   TIMELINE_OPTIONS,
 } from "@/lib/buyer";
 import { useBuyer } from "@/lib/buyerProfile";
+import { emptyPlaceFields, geocodeQuery, placeFields, type ResolvedPlace } from "@/lib/places";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { router } from "expo-router";
@@ -54,6 +57,22 @@ export default function ProfileEditScreen() {
   const [name, setName] = useState(profile.name);
   const [status, setStatus] = useState(profile.status);
   const [location, setLocation] = useState(profile.location);
+  const [place, setPlace] = useState<ResolvedPlace | null>(
+    hasDiscoverableLocation(profile)
+      ? {
+          label: profile.location,
+          placeId: profile.placeId,
+          lat: profile.lat as number,
+          lng: profile.lng as number,
+          geohash: profile.geohash,
+          geohashPrefixes: profile.geohashPrefixes,
+          city: profile.locationCity,
+          region: profile.locationRegion,
+          country: profile.locationCountry,
+          postal: profile.locationPostal,
+        }
+      : null
+  );
   const [bio, setBio] = useState(profile.bio);
   const [timeline, setTimeline] = useState(profile.timeline);
   const [condition, setCondition] = useState(profile.condition);
@@ -71,16 +90,44 @@ export default function ProfileEditScreen() {
     setBusy(true);
     setError("");
     try {
+      const query = location.trim();
+      let geo = emptyPlaceFields();
+      if (query) {
+        if (place) {
+          geo = placeFields(place);
+        } else if (hasDiscoverableLocation(profile) && query === profile.location.trim()) {
+          geo = placeFields({
+            label: profile.location,
+            placeId: profile.placeId,
+            lat: profile.lat as number,
+            lng: profile.lng as number,
+            geohash: profile.geohash,
+            geohashPrefixes: profile.geohashPrefixes,
+            city: profile.locationCity,
+            region: profile.locationRegion,
+            country: profile.locationCountry,
+            postal: profile.locationPostal,
+          });
+        } else {
+          const resolved = await geocodeQuery(query);
+          if (!resolved) {
+            setError("Pick a place from the list so dealers can find you by area.");
+            setBusy(false);
+            return;
+          }
+          geo = placeFields(resolved);
+        }
+      }
       await saveProfile({
         name: name.trim(),
         status: status.trim(),
-        location: location.trim(),
         bio: bio.trim(),
         timeline,
         condition,
         payment,
         currentVehicle: currentVehicle.trim(),
         preapproved,
+        ...geo,
       });
       router.back();
     } catch (err) {
@@ -144,12 +191,15 @@ export default function ProfileEditScreen() {
       />
 
       <Text style={formStyles.label}>Location</Text>
-      <TextInput
-        style={formStyles.input}
+      <LocationSearch
         value={location}
         onChangeText={setLocation}
-        placeholder="Los Angeles, CA"
+        onResolved={setPlace}
+        placeholder="City, neighborhood, or address"
       />
+      <Text style={formStyles.hint}>
+        Pick a suggestion. Dealers search nearby buyers by this pin, not a typed city name.
+      </Text>
 
       <Text style={formStyles.label}>About</Text>
       <TextInput

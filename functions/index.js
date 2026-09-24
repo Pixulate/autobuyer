@@ -7,7 +7,10 @@ const apn = require("apn");
 
 initializeApp();
 
-const BUNDLE_ID = "com.autoquest.autobuyer";
+const BUNDLES = {
+  buyer: "com.autoquest.autobuyer",
+  seller: "com.autoquest.autoseller",
+};
 
 function apnAuth() {
   const key = process.env.APNS_KEY;
@@ -21,15 +24,30 @@ function apnAuth() {
   };
 }
 
-function normalizeToken(token) {
+function normalizePushToken(token) {
   return String(token || "")
     .replace(/[<>\s]/g, "")
     .toLowerCase();
 }
 
-function makeVoipNote(payload) {
+function voipTopic(user) {
+  if (user?.voipBundleId) return `${user.voipBundleId}.voip`;
+  if (user?.voipTopic) return user.voipTopic;
+  if (user?.role === "seller" || user?.accountType === "seller") {
+    return `${BUNDLES.seller}.voip`;
+  }
+  return `${BUNDLES.buyer}.voip`;
+}
+
+function topicFallbacks(user) {
+  const primary = voipTopic(user);
+  const extras = [`${BUNDLES.buyer}.voip`, `${BUNDLES.seller}.voip`].filter((topic) => topic !== primary);
+  return [primary, ...extras];
+}
+
+function makeVoipNote(payload, topic) {
   const note = new apn.Notification();
-  note.topic = `${BUNDLE_ID}.voip`;
+  note.topic = topic;
   note.pushType = "voip";
   note.priority = 10;
   note.expiry = 0;
@@ -37,16 +55,17 @@ function makeVoipNote(payload) {
   return note;
 }
 
-async function sendVoipOnce(token, payload, production) {
+async function sendVoipOnce(token, payload, production, topic) {
   const auth = apnAuth();
   if (!auth) return { sent: false, reason: "missing-apns" };
   const provider = new apn.Provider({ token: auth, production });
   try {
-    const result = await provider.send(makeVoipNote(payload), token);
+    const result = await provider.send(makeVoipNote(payload, topic), token);
     const failed = result.failed || [];
     return {
       sent: result.sent?.length > 0,
       env: production ? "production" : "sandbox",
+      topic,
       failed,
       reason: failed[0]?.response?.reason,
     };
@@ -55,30 +74,46 @@ async function sendVoipOnce(token, payload, production) {
   }
 }
 
-async function sendVoip(token, payload, preferredSandbox) {
+function envOrder(user) {
+  if (user?.voipApnsEnv === "production") return [true, false];
+  if (user?.voipApnsEnv === "sandbox") return [false, true];
+  if (String(process.env.APNS_PRODUCTION || "").toLowerCase() === "true") return [true, false];
+  return [false, true];
+}
+
+async function sendVoip(token, payload, user) {
   const auth = apnAuth();
   if (!auth) {
     console.warn("APNs VoIP not configured (APNS_KEY / APNS_KEY_ID / APNS_TEAM_ID)");
     return { sent: false, reason: "missing-apns" };
   }
-  const device = normalizeToken(token);
+  const device = normalizePushToken(token);
   if (!device || device.length < 32) {
     return { sent: false, reason: "bad-token-format" };
   }
-
-  const order =
-    preferredSandbox === false ? [true, false] : preferredSandbox === true ? [false, true] : [false, true];
+  if (user?.devicePushToken && normalizePushToken(user.devicePushToken) === device) {
+    console.warn("Skipping VoIP send: stored voip token matches regular APNs device token");
+    return { sent: false, reason: "not-a-voip-token" };
+  }
 
   let last = null;
-  for (const production of order) {
-    last = await sendVoipOnce(device, payload, production);
-    if (last.sent) {
-      console.log("VoIP sent", { env: last.env });
-      return last;
-    }
-    if (last.reason && last.reason !== "BadDeviceToken" && last.reason !== "DeviceTokenNotForTopic") {
-      console.error("VoIP send failed", last.failed);
-      return last;
+  let skipProduction = user?.voipApnsEnv === "sandbox";
+  for (const topic of topicFallbacks(user || {})) {
+    for (const production of envOrder(user || {})) {
+      if (production && skipProduction) continue;
+      last = await sendVoipOnce(device, payload, production, topic);
+      if (last.sent) {
+        console.log("VoIP sent", { env: last.env, topic });
+        return last;
+      }
+      console.warn("VoIP attempt failed", {
+        env: last.env,
+        topic,
+        reason: last.reason,
+      });
+      if (last.reason === "BadEnvironmentKeyInToken") {
+        skipProduction = true;
+      }
     }
   }
   console.error("VoIP send failed", last?.failed);
@@ -143,7 +178,7 @@ async function ringCallee(callId, data) {
   };
   const results = {};
   if (user.voipPushToken) {
-    results.voip = await sendVoip(user.voipPushToken, payload, user.voipApnsSandbox);
+    results.voip = await sendVoip(user.voipPushToken, payload, user);
   }
   if (user.devicePushToken && user.pushPlatform === "android") {
     try {
